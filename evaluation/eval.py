@@ -20,27 +20,6 @@ if __name__ == '__main__':
     ''' parser configs '''
     args = parser.parse_args()
 
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-    # psnr = []
-    # ssim = []
-    # for gt_path, out_path in track(zip(glob.glob(os.path.join(args.src, "*")), glob.glob(os.path.join(args.dst, "*"))), total=685):
-    #     gt = np.array(Image.open(gt_path))
-    #     out = np.array(Image.open(out_path))
-    #     _psnr = compare_psnr(gt, out)
-    #     _ssim = ssim = compare_ssim(
-    #         gt, out, multichannel=True, gaussian_weights=True, use_sample_covariance=False, sigma=1.5)
-    #     psnr += [_psnr]
-    #     ssim += [_ssim]
-    # psnr = sum(psnr)/len(psnr)
-    # ssim = sum(ssim)/len(ssim)
-    # print(
-    #     f'PSNR: {psnr}\n',
-    #     f'SSIM: {ssim}\n',
-    # )
-=======
->>>>>>> a13ebef0541ec6fe26f52d5598a109d848a51b9c
     psnr = []
     ssim = []
     for gt_path, out_path in track(zip(glob.glob(os.path.join(args.src, "*")), glob.glob(os.path.join(args.dst, "*"))), total=685):
@@ -57,10 +36,7 @@ if __name__ == '__main__':
         f'PSNR: {psnr}\n',
         f'SSIM: {ssim}\n',
     )
-<<<<<<< HEAD
-=======
->>>>>>> ea6fb03699555768d2adcb4bc12908f82098912d
->>>>>>> a13ebef0541ec6fe26f52d5598a109d848a51b9c
+
     fid_score = fid.compute_fid(args.src, args.dst)
     is_mean, is_std = inception_score(
         BaseDataset(args.dst),
