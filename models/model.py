@@ -17,7 +17,7 @@ class EMA():
         return old * self.beta + (1 - self.beta) * new
 
 class Palette(BaseModel):
-    def __init__(self, networks, losses, sample_num, task, optimizers, ema_scheduler=None, **kwargs):
+    def __init__(self, networks, losses, sample_num, task, optimizers, ema_scheduler=None, wandb=None, **kwargs):
         ''' must to init BaseModel with kwargs '''
         super(Palette, self).__init__(**kwargs)
 
@@ -55,7 +55,8 @@ class Palette(BaseModel):
 
         self.sample_num = sample_num
         self.task = task
-        
+        self.wandb = wandb
+
     def set_input(self, data):
         ''' must use set_device in tensor '''
         self.cond_image = self.set_device(data.get('cond_image'))
@@ -131,6 +132,8 @@ class Palette(BaseModel):
                 for key, value in self.train_metrics.result().items():
                     self.logger.info('{:5s}: {}\t'.format(str(key), value))
                     self.writer.add_scalar(key, value)
+                    if self.wandb != None:
+                        self.wandb.log({key:value}, step=self.iter)
                 for key, value in self.get_current_visuals().items():
                     self.writer.add_images(key, value, dataformats="CHW")
             if self.ema_scheduler is not None:
