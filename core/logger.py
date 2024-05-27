@@ -146,9 +146,33 @@ class VisualWriter():
             return attr
 
 
+# class LogTracker:
+#     """
+#     record training numerical indicators.
+#     """
+#     def __init__(self, *keys, phase='train'):
+#         self.phase = phase
+#         self._data = pd.DataFrame(index=keys, columns=['total', 'counts', 'average'])
+#         self.reset()
+
+#     def reset(self):
+#         for col in self._data.columns:
+#             self._data[col].values[:] = 0
+
+#     def update(self, key, value, n=1):
+#         self._data.total[key] += value * n
+#         self._data.counts[key] += n
+#         self._data.average[key] = self._data.total[key] / self._data.counts[key]
+
+#     def avg(self, key):
+#         return self._data.average[key]
+
+#     def result(self):
+#         return {'{}/{}'.format(self.phase, k):v for k, v in dict(self._data.average).items()}
+
 class LogTracker:
     """
-    record training numerical indicators.
+    Record training numerical indicators.
     """
     def __init__(self, *keys, phase='train'):
         self.phase = phase
@@ -156,16 +180,17 @@ class LogTracker:
         self.reset()
 
     def reset(self):
-        for col in self._data.columns:
-            self._data[col].values[:] = 0
+        self._data.loc[:, 'total'] = 0
+        self._data.loc[:, 'counts'] = 0
+        self._data.loc[:, 'average'] = 0
 
     def update(self, key, value, n=1):
-        self._data.total[key] += value * n
-        self._data.counts[key] += n
-        self._data.average[key] = self._data.total[key] / self._data.counts[key]
+        self._data.loc[key, 'total'] += value * n
+        self._data.loc[key, 'counts'] += n
+        self._data.loc[key, 'average'] = self._data.loc[key, 'total'] / self._data.loc[key, 'counts']
 
     def avg(self, key):
-        return self._data.average[key]
+        return self._data.loc[key, 'average']
 
     def result(self):
-        return {'{}/{}'.format(self.phase, k):v for k, v in dict(self._data.average).items()}
+        return {'{}/{}'.format(self.phase, k): v for k, v in self._data['average'].items()}

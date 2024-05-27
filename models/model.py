@@ -15,13 +15,15 @@ class EMA():
         if old is None:
             return new
         return old * self.beta + (1 - self.beta) * new
-
+ 
 class Palette(BaseModel):
     def __init__(self, networks, losses, sample_num, task, optimizers, ema_scheduler=None, wandb=None, **kwargs):
         ''' must to init BaseModel with kwargs '''
         super(Palette, self).__init__(**kwargs)
 
         ''' networks, dataloder, optimizers, losses, etc. '''
+
+        print("Using DiffCR3 model, with modification")
         self.loss_fn = losses[0]
         self.netG = networks[0]
         if ema_scheduler is not None:
@@ -52,11 +54,12 @@ class Palette(BaseModel):
         self.train_metrics = LogTracker(*[m.__name__ for m in losses], phase='train')
         self.val_metrics = LogTracker(*[m.__name__ for m in self.metrics], phase='val')
         self.test_metrics = LogTracker(*[m.__name__ for m in self.metrics], phase='test')
+        self.test_metrics_psnr = LogTracker(*[m.__name__ for m in self.metrics], phase='test')
 
         self.sample_num = sample_num
         self.task = task
         self.wandb = wandb
-
+        
     def set_input(self, data):
         ''' must use set_device in tensor '''
         self.cond_image = self.set_device(data.get('cond_image'))
@@ -93,6 +96,7 @@ class Palette(BaseModel):
         return dict
 
     def save_current_results(self):
+        
         ret_path = []
         ret_result = []
         for idx in range(self.batch_size):
@@ -118,6 +122,7 @@ class Palette(BaseModel):
     def train_step(self):
         self.netG.train()
         self.train_metrics.reset()
+        count = 0
         for train_data in tqdm.tqdm(self.phase_loader):
             self.set_input(train_data)
             self.optG.zero_grad()
@@ -129,16 +134,21 @@ class Palette(BaseModel):
             self.writer.set_iter(self.epoch, self.iter, phase='train')
             self.train_metrics.update(self.loss_fn.__name__, loss.item())
             if self.iter % self.opt['train']['log_iter'] == 0:
-                for key, value in self.train_metrics.result().items():
-                    self.logger.info('{:5s}: {}\t'.format(str(key), value))
-                    self.writer.add_scalar(key, value)
-                    if self.wandb != None:
-                        self.wandb.log({key:value}, step=self.iter)
+            #     for key, value in self.train_metrics.result().items():
+            #         self.logger.info('{:5s}: {}\t'.format(str(key), value))
+            #         self.writer.add_scalar(key, value)
+            #         if self.wandb != None:
+            #             self.wandb.log({key:value}, step=self.iter)
+            #             print(key, value)
+                        # print(key, value)
                 for key, value in self.get_current_visuals().items():
                     self.writer.add_images(key, value, dataformats="CHW")
             if self.ema_scheduler is not None:
                 if self.iter > self.ema_scheduler['ema_start'] and self.iter % self.ema_scheduler['ema_iter'] == 0:
                     self.EMA.update_model_average(self.netG_EMA, self.netG)
+            count += 1
+
+            # if count == 2: break
 
         for scheduler in self.schedulers:
             scheduler.step()
@@ -173,7 +183,9 @@ class Palette(BaseModel):
                     self.writer.add_scalar(key, value)
                 for key, value in self.get_current_visuals(phase='val').items():
                     self.writer.add_images(key, value, dataformats="CHW")
-                self.writer.save_images(self.save_current_results())
+
+                if self.save_current_results_flag == True:
+                    self.writer.save_images(self.save_current_results())
 
         return self.val_metrics.result()
 
@@ -200,12 +212,17 @@ class Palette(BaseModel):
                 self.writer.set_iter(self.epoch, self.iter, phase='test')
                 for met in self.metrics:
                     key = met.__name__
+                    # print(self.gt_image.shape, self.output.shape)
                     value = met(self.gt_image, self.output)
+                    # print(value)
                     self.test_metrics.update(key, value)
                     self.writer.add_scalar(key, value)
                 # for key, value in self.get_current_visuals(phase='test').items():
                 #     self.writer.add_images(key, value, dataformats="CHW")
-                self.writer.save_images(self.save_current_results())
+                if self.save_current_results_flag == True:
+                    self.writer.save_images(self.save_current_results())
+
+                # break
         
         test_log = self.test_metrics.result()
         ''' save logged informations into log dict ''' 
@@ -227,6 +244,7 @@ class Palette(BaseModel):
 
     def save_everything(self):
         """ load pretrained model and training state. """
+        print(f"Epoch: {self.epoch} | Begin saving the model")
         if self.opt['distributed']:
             netG_label = self.netG.module.__class__.__name__
         else:

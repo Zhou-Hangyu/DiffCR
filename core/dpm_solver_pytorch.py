@@ -290,6 +290,10 @@ def model_wrapper(
             return output
         elif model_type == "x_start":
             alpha_t, sigma_t = noise_schedule.marginal_alpha(t_continuous), noise_schedule.marginal_std(t_continuous)
+            # Add Code Here =====
+            alpha_t = alpha_t[:,None, None,None]
+            sigma_t = sigma_t[:,None, None,None]
+            # Add Code ===========
             return (x - alpha_t * output) / sigma_t
         elif model_type == "v":
             alpha_t, sigma_t = noise_schedule.marginal_alpha(t_continuous), noise_schedule.marginal_std(t_continuous)

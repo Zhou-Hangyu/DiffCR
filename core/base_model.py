@@ -43,27 +43,38 @@ class BaseModel():
                 self.phase_loader.sampler.set_epoch(self.epoch) 
 
             train_log = self.train_step()
-
-            ''' save logged informations into log dict ''' 
-            train_log.update({'epoch': self.epoch, 'iters': self.iter})
-
-            ''' print logged informations to the screen and tensorboard ''' 
             for key, value in train_log.items():
-                self.logger.info('{:5s}: {}\t'.format(str(key), value))
+                # if self.wandb != None:
+                self.wandb.log({"train_"+key:value}, step=self.epoch)
+                print(self.epoch, key, value)
+
+            # ''' save logged informations into log dict ''' 
+            # train_log.update({'epoch': self.epoch, 'iters': self.iter})
+
+            # ''' print logged informations to the screen and tensorboard ''' 
+            # for key, value in train_log.items():
+            #     self.logger.info('{:5s}: {}\t'.format(str(key), value))
             
             if self.epoch % self.opt['train']['save_checkpoint_epoch'] == 0:
                 self.logger.info('Saving the self at the end of epoch {:.0f}'.format(self.epoch))
                 self.save_everything()
 
-            if self.epoch % self.opt['train']['val_epoch'] == 0:
-                self.logger.info("\n\n\n------------------------------Validation Start------------------------------")
-                if self.val_loader is None:
-                    self.logger.warning('Validation stop where dataloader is None, Skip it.')
-                else:
-                    val_log = self.val_step()
-                    for key, value in val_log.items():
-                        self.logger.info('{:5s}: {}\t'.format(str(key), value))
-                self.logger.info("\n------------------------------Validation End------------------------------\n\n")
+            # self.save_everything()
+
+            # val_log = self.val_step()
+            
+            # for key, value in val_log.items():
+            #     if self.wandb != None:
+            #         self.wandb.log({"val_"+key:value}, step=self.epoch)
+
+            # self.logger.info("\n\n\n------------------------------Validation Start------------------------------")
+            # if self.val_loader is None:
+            #     self.logger.warning('Validation stop where dataloader is None, Skip it.')
+            # else:
+            #     val_log = self.val_step()
+            #     for key, value in val_log.items():
+            #         self.logger.info('{:5s}: {}\t'.format(str(key), value))
+            # self.logger.info("\n------------------------------Validation End------------------------------\n\n")
         self.logger.info('Number of Epochs has reached the limit, End.')
 
     def test(self):
@@ -123,7 +134,8 @@ class BaseModel():
 
     def save_training_state(self):
         """ saves training state during training, only work on GPU 0 """
-        if self.opt['global_rank'] !=0:
+        print(f"Check rank {self.opt['global_rank']}")
+        if self.opt['global_rank'] !=0 and self.opt['global_rank'] is not None:
             return
         assert isinstance(self.optimizers, list) and isinstance(self.schedulers, list), 'optimizers and schedulers must be a list.'
         state = {'epoch': self.epoch, 'iter': self.iter, 'schedulers': [], 'optimizers': []}
@@ -133,6 +145,7 @@ class BaseModel():
             state['optimizers'].append(o.state_dict())
         save_filename = '{}.state'.format(self.epoch)
         save_path = os.path.join(self.opt['path']['checkpoint'], save_filename)
+        print(f"save_path: {save_path}")
         torch.save(state, save_path)
 
     def resume_training(self):

@@ -6,51 +6,101 @@ import numpy as np
 from tqdm import tqdm
 from core.base_network import BaseNetwork
 from core.dpm_solver_pytorch import NoiseScheduleVP, model_wrapper, DPM_Solver
+
+
+import sys, os
+if "ck696" in os.getcwd():
+    sys.path.append("/share/hariharan/ck696/allclear/baselines/DiffCR/models")
+else:
+    sys.path.append("/share/hariharan/cloud_removal/allclear/baselines/DiffCR/models")
+
 class Network(BaseNetwork):
     def __init__(self, unet, beta_schedule, module_name='sr3', **kwargs):
         super(Network, self).__init__(**kwargs)
         if module_name == 'sr3':
-            from .sr3_modules.unet import UNet
+            from sr3_modules.unet import UNet
         elif module_name == 'guided_diffusion':
-            from .guided_diffusion_modules.unet import UNet
+            from guided_diffusion_modules.unet import UNet
         elif module_name == 'tanh':
-            from .guided_diffusion_modules.unet_tanh import UNet
+            from guided_diffusion_modules.unet_tanh import UNet
         elif module_name == 'ours':
-            from .ours.unet_down3 import UNet
+            from ours.unet_down3 import UNet
         elif module_name == "ours":
-            from .ours.ours import UNet
+            from ours.nafnet import UNet
         elif module_name == "conv2former":
-            from .ours.guided_diffusion_likai import UNet
+            from ours.guided_diffusion_likai import UNet
         elif module_name == "double":
-            from .ours.ours_double import UNet
+            from ours.nafnet_double import UNet
         elif module_name == "double_encoder":
-            from .ours.ours_double_encoder import UNet
+            from ours.nafnet_double_encoder import UNet
         elif module_name == "ours_ours":
-            from .ours.ours_ours import UNet
+            from ours.nafnet_ours import UNet
         elif module_name == "ours_res":
-            from .ours.ours_res_noinp import UNet
+            from ours.nafnet_res_noinp import UNet
         elif module_name == "ours_newca_noinp":
-            from .ours.ours_newca_noinp import UNet
+            from ours.nafnet_newca_noinp import UNet
         elif module_name == "ours_reverseca_noinp":
-            from .ours.ours_reverseca_noinp import UNet
+            from ours.nafnet_reverseca_noinp import UNet
         elif module_name == "ours_splitca_noinp":
-            from .ours.ours64_splitca_noinp import UNet
+            from ours.nafnet64_splitca_noinp import UNet
         elif module_name == "ours_nosca_silu_noinp":
-            from .ours.ours_nosca_silu import UNet
+            from ours.nafnet_nosca_silu import UNet
         elif module_name == "ours_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion":
-            from .ours.ours_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion import UNet
+            from ours.nafnet_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion import UNet
         elif module_name == "ours_sum_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion":
-            from .ours.ours_sum_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion import UNet
+            from ours.nafnet_sum_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion import UNet
         elif module_name == "ours_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_middle_fusion":
-            from .ours.ours_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_middle_fusion import UNet
+            from ours.nafnet_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_middle_fusion import UNet
         elif module_name == "ours_double_encoder_splitcaCond_splitcaUnet":
-            from .ours.ours_double_encoder_splitcaCond_splitcaUnet import UNet
+            from ours.nafnet_double_encoder_splitcaCond_splitcaUnet import UNet
         elif module_name == "ours_double_encoder_splitcaCond":
-            from .ours.ours_double_encoder_splitcaCond import UNet
+            from ours.nafnet_double_encoder_splitcaCond import UNet
         elif module_name == "ours_double_encoder_splitcaUnet":
-            from .ours.ours_double_encoder_splitcaUnet import UNet
+            from ours.nafnet_double_encoder_splitcaUnet import UNet
+
+        # if module_name == 'sr3':
+        #     from .sr3_modules.unet import UNet
+        # elif module_name == 'guided_diffusion':
+        #     from .guided_diffusion_modules.unet import UNet
+        # elif module_name == 'tanh':
+        #     from .guided_diffusion_modules.unet_tanh import UNet
+        # elif module_name == 'ours':
+        #     from .ours.unet_down3 import UNet
+        # elif module_name == "ours":
+        #     from .ours.ours import UNet
+        # elif module_name == "conv2former":
+        #     from .ours.guided_diffusion_likai import UNet
+        # elif module_name == "double":
+        #     from .ours.ours_double import UNet
+        # elif module_name == "double_encoder":
+        #     from .ours.ours_double_encoder import UNet
+        # elif module_name == "ours_ours":
+        #     from .ours.ours_ours import UNet
+        # elif module_name == "ours_res":
+        #     from .ours.ours_res_noinp import UNet
+        # elif module_name == "ours_newca_noinp":
+        #     from .ours.ours_newca_noinp import UNet
+        # elif module_name == "ours_reverseca_noinp":
+        #     from .ours.ours_reverseca_noinp import UNet
+        # elif module_name == "ours_splitca_noinp":
+        #     from .ours.ours64_splitca_noinp import UNet
+        # elif module_name == "ours_nosca_silu_noinp":
+        #     from .ours.ours_nosca_silu import UNet
+        # elif module_name == "ours_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion":
+        #     from .ours.ours_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion import UNet
+        # elif module_name == "ours_sum_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion":
+        #     from .ours.ours_sum_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_noCondFFN_middle_fusion import UNet
+        # elif module_name == "ours_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_middle_fusion":
+        #     from .ours.ours_concat_no_condskip_nodrop_noparams_splitca_double_encoder_decoder_middle_fusion import UNet
+        # elif module_name == "ours_double_encoder_splitcaCond_splitcaUnet":
+        #     from .ours.ours_double_encoder_splitcaCond_splitcaUnet import UNet
+        # elif module_name == "ours_double_encoder_splitcaCond":
+        #     from .ours.ours_double_encoder_splitcaCond import UNet
+        # elif module_name == "ours_double_encoder_splitcaUnet":
+        #     from .ours.ours_double_encoder_splitcaUnet import UNet
         self.denoise_fn = UNet(**unet)
         self.beta_schedule = beta_schedule
+
 
     def set_loss(self, loss_fn):
         self.loss_fn = loss_fn
@@ -123,7 +173,7 @@ class Network(BaseNetwork):
         return model_mean + noise * (0.5 * model_log_variance).exp()
 
     @torch.no_grad()
-    def restoration(self, y_cond, y_t=None, y_0=None, mask=None, sample_num=8):
+    def restoration(self, y_cond, y_t=None, y_0=None, mask=None, sample_num=8, steps=20):
         b, *_ = y_cond.shape
 
         assert self.num_timesteps > sample_num, 'num_timesteps must greater than sample_num'
@@ -157,7 +207,8 @@ class Network(BaseNetwork):
         )
         y_t = dpm_solver.sample(
             y_t,
-            steps=20, # 10, 12, 15, 20, 25, 50, 100
+            # steps=20, # 10, 12, 15, 20, 25, 50, 100
+            steps=steps, # 10, 12, 15, 20, 25, 50, 100
             order=2,
             skip_type="time_uniform",
             method="multistep",

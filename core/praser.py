@@ -27,26 +27,48 @@ def init_obj(opt, logger, *args, default_file_name='default file', given_module=
         file_name, class_name = name[0], name[1]
     else:
         file_name, class_name = default_file_name, name
-    try:
-        if given_module is not None:
-            module = given_module
-        else:
-            module = importlib.import_module(file_name)
+    
+    # Original Code Begins ========
+    # try:
+    #     if given_module is not None:
+    #         module = given_module
+    #     else:
+    #         module = importlib.import_module(file_name)
         
-        attr = getattr(module, class_name)
-        kwargs = opt.get('args', {})
-        kwargs.update(modify_kwargs)
-        ''' import class or function with args '''
-        if isinstance(attr, type): 
-            ret = attr(*args, **kwargs)
-            ret.__name__  = ret.__class__.__name__
-        elif isinstance(attr, FunctionType): 
-            ret = partial(attr, *args, **kwargs)
-            ret.__name__  = attr.__name__
-            # ret = attr
-        logger.info('{} [{:s}() form {:s}] is created.'.format(init_type, class_name, file_name))
-    except:
-        raise NotImplementedError('{} [{:s}() form {:s}] not recognized.'.format(init_type, class_name, file_name))
+    #     attr = getattr(module, class_name)
+    #     kwargs = opt.get('args', {})
+    #     kwargs.update(modify_kwargs)
+    #     ''' import class or function with args '''
+    #     if isinstance(attr, type): 
+    #         ret = attr(*args, **kwargs)
+    #         ret.__name__  = ret.__class__.__name__
+    #     elif isinstance(attr, FunctionType): 
+    #         ret = partial(attr, *args, **kwargs)
+    #         ret.__name__  = attr.__name__
+    #         # ret = attr
+    #     logger.info('{} [{:s}() form {:s}] is created.'.format(init_type, class_name, file_name))
+    # except:
+    #     raise NotImplementedError('{} [{:s}() form {:s}] not recognized.'.format(init_type, class_name, file_name))
+    # Original Code Ends  ========
+
+    if given_module is not None:
+        module = given_module
+    else:
+        module = importlib.import_module(file_name)
+    
+    attr = getattr(module, class_name)
+    kwargs = opt.get('args', {})
+    kwargs.update(modify_kwargs)
+    ''' import class or function with args '''
+    if isinstance(attr, type): 
+        ret = attr(*args, **kwargs)
+        ret.__name__  = ret.__class__.__name__
+    elif isinstance(attr, FunctionType): 
+        ret = partial(attr, *args, **kwargs)
+        ret.__name__  = attr.__name__
+        # ret = attr
+    logger.info('{} [{:s}() form {:s}] is created.'.format(init_type, class_name, file_name))
+    
     return ret
 
 
